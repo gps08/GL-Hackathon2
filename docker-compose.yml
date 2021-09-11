@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  
+  streamer:
+    build: streamer
+    ports:
+      - "9092:9092"
+
+  producer:
+    build: producer
+  
+  predictor:
+    build: predictor

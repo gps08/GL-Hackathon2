@@ -1,0 +1,6 @@
+kafka-python>=2.0.2
+numpy
+pandas
+matplotlib
+sklearn
+joblib
