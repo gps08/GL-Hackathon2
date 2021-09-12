@@ -21,7 +21,7 @@ def load_train_set(data_file):
     #Load the data using pandas read_csv method
     df=read_csv(data_file,nrows=40000, sep=",")
     #Display the first few rows in the dataframe
-    print(df.head())
+    # print(df.head())
     return df
 
 def preprocess_data(df):
@@ -30,27 +30,24 @@ def preprocess_data(df):
     ##Preprocessing the data removing missing values and extremely high parametes
     df = df.drop(["House Number","Summons Number","Street Code1","Street Code2","Street Code3","Issuer Code","Issuer Command","Issuer Squad","Violation Post Code","Vehicle Expiration Date"], axis = 1)
     df = df.dropna(how='any',axis='columns')
-    print(f"U sing {len(df)} datapoints for prediction after removing outliers")
+    print(f"Using {len(df)} datapoints for prediction after removing outliers")
     return df
 
-def encoding_categorical_values(x,y):
+def encoding_categorical_values(x):
     # select categorical features for one hot encoding
     cat_ix = x.select_dtypes(include=['object','int']).columns
-    print(cat_ix)
     # one hot encode categorical features only
-    ct = ColumnTransformer([('o',OneHotEncoder(),cat_ix)], remainder='passthrough')
+    ct = ColumnTransformer([('o',OneHotEncoder(handle_unknown='ignore'), cat_ix)], remainder='passthrough')
     x = ct.fit_transform(x)
-    return x,y
+    dump(ct, 'encoder.joblib')
+    return x
 
 def data_split(df):
     ##Splitting inputs and outputs
     df = pd.DataFrame(df)
     X, Y = df.drop(["Violation Location"], axis=1), df["Violation Location"]
-    print(Y)
-    X, Y = encoding_categorical_values(X, Y)
-    print('=====\n', X)
-    ##Splitting Data to training and testing
-    X_train, X_test, y_train, y_test = train_test_split(X,Y, test_size=0.2)
+    X = encoding_categorical_values(X)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
     return [X_train,X_test,y_train,y_test]
 
 def clf_alg(classifier,X_train,y_train):
@@ -60,9 +57,10 @@ def clf_alg(classifier,X_train,y_train):
         clf = SVC(kernel='poly', degree=3, max_iter=300000)
     elif classifier=='KNN':
         clf = KNeighborsClassifier(metric='manhattan')
-    return clf.fit(X_train,y_train)
+    print(X_train.shape)
+    return clf.fit(X_train, y_train)
 
-def model_performance(model_alg,X_test,y_test):
+def model_performance(model_alg, X_test, y_test):
     
     #Predicting for test data
     y_pred = model_alg.predict(X_test)
@@ -75,10 +73,10 @@ def model_performance(model_alg,X_test,y_test):
     f1 = f1_score(y_test,y_pred, average='macro')
     print(f"F1-score: {f1}")
     ##Confusion Matrix
-    cm = confusion_matrix(y_test, y_pred)
-    print(cm)
+    # cm = confusion_matrix(y_test, y_pred)
+    # print(cm)
     ## Heat Map
-    df_cm = pd.DataFrame(cm, range(cm.shape[0]), range(cm.shape[1]))
+    # df_cm = pd.DataFrame(cm, range(cm.shape[0]), range(cm.shape[1]))
     #sns.set(font_scale=1) # for label size
     #Display the confusion matrix in the form of heatmap
     #sns.heatmap(df_cm, annot=True, annot_kws={"size": 16}) # font size
@@ -86,17 +84,17 @@ def model_performance(model_alg,X_test,y_test):
 
 def model_training(df):
     X_train,X_test,y_train,y_test=data_split(df)
-    choose_alg = input("Choose Classifier\n DTC-DecisionTree\n SVM-SupportVectorMachines\n KNN-KNearestNeighbour\n")
-    model_alg = clf_alg(choose_alg,X_train,y_train)
-    model_performance(model_alg,X_train,y_train)
-    model_performance(model_alg,X_test,y_test)
+    # choose_alg = input("Choose Classifier\n DTC-DecisionTree\n SVM-SupportVectorMachines\n KNN-KNearestNeighbour\n")
+    # model_alg = clf_alg(choose_alg,X_train,y_train)
+    model_alg = clf_alg('SVM', X_train, y_train)
+    model_performance(model_alg, X_train, y_train)
     return model_alg
 
 def model_generate(data):
     data = load_train_set(data)
     data_processed = preprocess_data(data)
     trained_model = model_training(data_processed)
-    dump(trained_model,'developed.joblib')
+    dump(trained_model, 'developed.joblib')
     return trained_model
 
-developed_model=model_generate("training_data.csv")
+developed_model = model_generate("training_data.csv")

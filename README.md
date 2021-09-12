@@ -1,5 +1,5 @@
-# Docker Demo/Assignment
-https://github.com/gps08/price-predictor contains code which demonstrates docker and docker-compose using the IRIS dataset (https://scikit-learn.org/stable/auto_examples/datasets/plot_iris_dataset.html)
+# Hackathon 2 GL
+https://github.com/gps08/GL-Hackathon2 contains code which basic big data classification pipeline using pyspark and kafka
 
 ## Pre-requisites
 - Install `docker`

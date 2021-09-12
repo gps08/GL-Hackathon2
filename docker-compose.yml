@@ -9,6 +9,11 @@ services:
 
   producer:
     build: producer
+    depends_on:
+      - streamer
   
   predictor:
     build: predictor
+    depends_on: 
+      - streamer
+      - producer

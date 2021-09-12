@@ -7,6 +7,7 @@ from json import loads
 import sys
 from joblib import load
 import numpy as np
+import pandas as pd
 
 BROKER = '0.0.0.0:9092'
 TOPIC = 'parking_stats'
@@ -27,19 +28,15 @@ except Exception as e:
     sys.exit(1)
 
 model = load('developed.joblib')
+encoder = load('encoder.joblib')
 
 def predict(data):
-    x = np.array([data.values()])
-    # do one hot encoding
-    cat_ix = ['Plate ID', 'Registration State', 'Plate Type', 'Issue Date',
-       'Violation Code', 'Issuing Agency', 'Violation Precinct',
-       'Issuer Precinct', 'Violation Time', 'Date First Observed',
-       'Law Section', 'Sub Division', 'Vehicle Year', 'Feet From Curb']
-    ct = ColumnTransformer([('o', OneHotEncoder(), cat_ix)], remainder='passthrough')
-    x = ct.fit_transform(x)
-    print(model.predict(x))
+    x = {'row_1': list(data.values())}
+    x = pd.DataFrame.from_dict(x, orient='index', columns=list(data.keys()))
+    x = encoder.transform(x)
+    return model.predict(x)[0]
 
 for message in consumer:
     message = message.value
     print(f'input {message}')
-    predict(message)
+    print(f'prediction output {predict(message)}')
